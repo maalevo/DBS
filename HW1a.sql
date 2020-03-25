@@ -1,4 +1,5 @@
 %%sql
+
 -- drop all tables in order of their dependencies
 DROP TABLE IF EXISTS cVote;
 DROP TABLE IF EXISTS qVote;
@@ -18,36 +19,53 @@ CREATE TABLE users (username varchar(255) PRIMARY KEY,
                     karma INTEGER);
 
 CREATE TABLE question (qid SERIAL PRIMARY KEY, 
-                       askedBy VARCHAR(255) REFERENCES users,
+                       askedBy VARCHAR(255) NOT NULL,
                        category VARCHAR(255),
-                       text VARCHAR(1023) NOT NULL);
+                       text VARCHAR(1023) NOT NULL,
+                       FOREIGN KEY (askedBy) REFERENCES users(username));
 
 CREATE TABLE answer (aid SERIAL PRIMARY KEY, 
-                     givenBy VARCHAR(255) REFERENCES users, 
-                     answers INTEGER REFERENCES question,
-                     text VARCHAR(1023) NOT NULL);
-CREATE TABLE stepByStepA (aid INTEGER REFERENCES answer);
-CREATE TABLE externalA (aid INTEGER REFERENCES answer, 
+                     givenBy VARCHAR(255) NOT NULL, 
+                     answersQ INTEGER NOT NULL,
+                     text VARCHAR(1023) NOT NULL,
+                     FOREIGN KEY (givenBy) REFERENCES users(username),
+                     FOREIGN KEY (answersQ) REFERENCES question(qid));
+CREATE TABLE stepByStepA (aid INTEGER UNIQUE NOT NULL,
+                          FOREIGN KEY (aid) REFERENCES answer(aid));
+CREATE TABLE externalA (aid INTEGER UNIQUE NOT NULL, 
                         comment VARCHAR(255), 
-                        link VARCHAR(255));
+                        link VARCHAR(255),
+                        FOREIGN KEY (aid) REFERENCES answer(aid));
 
 CREATE TABLE comment (cid SERIAL PRIMARY KEY,
-                     byUser  VARCHAR(255) REFERENCES users,
-                     text VARCHAR(1023) NOT NULL);
-CREATE TABLE qComment (cid INTEGER REFERENCES comment,
-                       forQ INTEGER REFERENCES question);
-CREATE TABLE aComment (cid INTEGER REFERENCES comment,
-                       forA INTEGER REFERENCES answer);
+                      byUser VARCHAR(255) NOT NULL,
+                      text VARCHAR(1023) NOT NULL,
+                      FOREIGN KEY (byUser) REFERENCES users(username));
+CREATE TABLE qComment (cid INTEGER UNIQUE NOT NULL,
+                       forQ INTEGER NOT NULL,
+                       FOREIGN KEY (cid) REFERENCES comment(cid),
+                       FOREIGN KEY (forQ) REFERENCES question(qid) ON DELETE CASCADE);
+CREATE TABLE aComment (cid INTEGER UNIQUE NOT NULL,
+                       forA INTEGER NOT NULL,
+                       FOREIGN KEY(cid) REFERENCES comment,
+                       FOREIGN KEY (forA) REFERENCES answer(aid) ON DELETE CASCADE);
 
 CREATE TABLE vote (vid SERIAL PRIMARY KEY, 
-                   by  VARCHAR(255) REFERENCES users, 
-                   upVote BOOLEAN); 
-CREATE TABLE cVote (vid INTEGER REFERENCES vote, 
-                    cid INTEGER REFERENCES comment);
-CREATE TABLE qVote (vid INTEGER REFERENCES vote, 
-                    qid INTEGER REFERENCES question);
-CREATE TABLE aVote (vid INTEGER REFERENCES vote, 
-                    aid INTEGER REFERENCES answer);
+                   by  VARCHAR(255) NOT NULL, 
+                   upVote BOOLEAN NOT NULL,
+                   FOREIGN KEY (by) REFERENCES users(username)); 
+CREATE TABLE cVote (vid INTEGER UNIQUE NOT NULL, 
+                    cid INTEGER NOT NULL,
+                    FOREIGN KEY (vid) REFERENCES vote(vid),
+                    FOREIGN KEY (cid) REFERENCES comment(cid));
+CREATE TABLE qVote (vid INTEGER UNIQUE NOT NULL, 
+                    qid INTEGER NOT NULL,
+                    FOREIGN KEY (vid) REFERENCES vote(vid),
+                    FOREIGN KEY (qid) REFERENCES question(qid));
+CREATE TABLE aVote (vid INTEGER UNIQUE NOT NULL, 
+                    aid INTEGER NOT NULL,
+                    FOREIGN KEY (vid) REFERENCES vote(vid),
+                    FOREIGN KEY (aid) REFERENCES answer(aid));
 
 -------------------------------------------------------
 -- insert users
