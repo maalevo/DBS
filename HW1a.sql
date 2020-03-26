@@ -28,6 +28,7 @@ CREATE TABLE answer (aid SERIAL PRIMARY KEY,
                      givenBy VARCHAR(255) NOT NULL, 
                      answersQ INTEGER NOT NULL,
                      text VARCHAR(1023) NOT NULL,
+                     source VARCHAR(1024),
                      FOREIGN KEY (givenBy) REFERENCES users(username),
                      FOREIGN KEY (answersQ) REFERENCES question(qid));
 CREATE TABLE stepByStepA (aid INTEGER UNIQUE NOT NULL,
